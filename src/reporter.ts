@@ -7,7 +7,7 @@
  *
  * Add to `playwright.config.ts`:
  *
- *   reporter: [["@diffdeck/playwright-reporter", { host: "https://diffdeck.ai" }]]
+ *   reporter: [["@diffdeckai/playwright-reporter", { host: "https://diffdeck.ai" }]]
  *
  * Requires Playwright to record video, e.g. `use: { video: "on" }`.
  */
@@ -29,7 +29,7 @@ import {
 } from "./types";
 import { postRecording, type RecordingUpload } from "./upload";
 
-const PACKAGE_NAME = "@diffdeck/playwright-reporter";
+const PACKAGE_NAME = "@diffdeckai/playwright-reporter";
 // Kept in sync with package.json; surfaced in the uploaded metadata.
 const PACKAGE_VERSION = "0.1.0";
 const DEFAULT_HOST = "https://diffdeck.ai";

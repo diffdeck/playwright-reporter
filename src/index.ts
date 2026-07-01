@@ -1,5 +1,5 @@
 /**
- * @diffdeck/playwright-reporter — entry point.
+ * @diffdeckai/playwright-reporter — entry point.
  *
  * The default export is the Playwright `Reporter` class; reference it from
  * `playwright.config.ts` by package name. Types describing the uploaded step-timeline

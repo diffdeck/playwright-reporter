@@ -147,7 +147,7 @@ describe("DiffDeckReporter", () => {
     // Step-timeline metadata shape.
     const metadata = JSON.parse(String(form.get("metadata"))) as RecordingMetadata;
     assert.equal(metadata.schemaVersion, 1);
-    assert.equal(metadata.reporter, "@diffdeck/playwright-reporter");
+    assert.equal(metadata.reporter, "@diffdeckai/playwright-reporter");
     assert.equal(typeof metadata.reporterVersion, "string");
     assert.equal(metadata.recordingStartTime, TEST_START.toISOString());
     assert.equal(metadata.testDurationMs, 1500);
@@ -260,7 +260,7 @@ describe("buildRecordingForm", () => {
       testTitle: "t",
       metadata: {
         schemaVersion: 1,
-        reporter: "@diffdeck/playwright-reporter",
+        reporter: "@diffdeckai/playwright-reporter",
         reporterVersion: "0.0.0",
         recordingStartTime: TEST_START.toISOString(),
         testDurationMs: 0,

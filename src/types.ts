@@ -1,5 +1,5 @@
 /**
- * Public types for @diffdeck/playwright-reporter.
+ * Public types for @diffdeckai/playwright-reporter.
  *
  * The reporter uploads each Playwright test's video recording to DiffDeck and,
  * alongside it, a JSON `metadata` document describing the per-step timeline. That
@@ -45,7 +45,7 @@ export interface RecordingStep {
 export interface RecordingMetadata {
   /** Schema version of this document (see `RECORDING_METADATA_SCHEMA_VERSION`). */
   schemaVersion: number;
-  /** Reporter that produced the document, e.g. "@diffdeck/playwright-reporter". */
+  /** Reporter that produced the document, e.g. "@diffdeckai/playwright-reporter". */
   reporter: string;
   /** Reporter package version. */
   reporterVersion: string;

@@ -1,4 +1,4 @@
-# @diffdeck/playwright-reporter
+# @diffdeckai/playwright-reporter
 
 A [Playwright](https://playwright.dev) reporter that uploads each test's **video recording** — together with a **per-step timeline** — to [DiffDeck](https://diffdeck.ai). DiffDeck hosts the videos and renders the step timeline over them so you can scrub a failing run step by step.
 
@@ -7,7 +7,7 @@ The reporter does not run or change your tests. It hooks into Playwright's repor
 ## Install
 
 ```bash
-npm install --save-dev @diffdeck/playwright-reporter
+npm install --save-dev @diffdeckai/playwright-reporter
 ```
 
 `@playwright/test` is a peer dependency (Playwright `>=1.30`).
@@ -25,7 +25,7 @@ export default defineConfig({
   },
   reporter: [
     ["list"],
-    ["@diffdeck/playwright-reporter", { host: "https://diffdeck.ai" }],
+    ["@diffdeckai/playwright-reporter", { host: "https://diffdeck.ai" }],
   ],
 });
 ```
@@ -33,7 +33,7 @@ export default defineConfig({
 Options can also come entirely from the environment, so CI needs no config change:
 
 ```ts
-reporter: [["list"], ["@diffdeck/playwright-reporter"]],
+reporter: [["list"], ["@diffdeckai/playwright-reporter"]],
 ```
 
 ### Options
@@ -89,7 +89,7 @@ The `metadata` field is a JSON document describing the per-step timeline. This i
 ```jsonc
 {
   "schemaVersion": 1,
-  "reporter": "@diffdeck/playwright-reporter",
+  "reporter": "@diffdeckai/playwright-reporter",
   "reporterVersion": "0.1.0",
   "recordingStartTime": "2026-06-30T12:00:00.000Z", // ISO; timeline zero point
   "testDurationMs": 1500,
@@ -119,8 +119,8 @@ The `metadata` field is a JSON document describing the per-step timeline. This i
 TypeScript types for this document are exported from the package:
 
 ```ts
-import type { RecordingMetadata, RecordingStep } from "@diffdeck/playwright-reporter";
-import { RECORDING_METADATA_SCHEMA_VERSION } from "@diffdeck/playwright-reporter";
+import type { RecordingMetadata, RecordingStep } from "@diffdeckai/playwright-reporter";
+import { RECORDING_METADATA_SCHEMA_VERSION } from "@diffdeckai/playwright-reporter";
 ```
 
 ### Notes on alignment
