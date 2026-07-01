@@ -1,0 +1,55 @@
+{
+  "name": "@diffdeck/playwright-reporter",
+  "version": "0.1.0",
+  "description": "Playwright reporter that uploads each test's video recording, with a per-step timeline, to DiffDeck.",
+  "keywords": [
+    "playwright",
+    "playwright-reporter",
+    "diffdeck",
+    "video",
+    "recording",
+    "test-reporter"
+  ],
+  "license": "MIT",
+  "author": "DiffDeck",
+  "homepage": "https://github.com/diffdeck/playwright-reporter#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/diffdeck/playwright-reporter.git"
+  },
+  "bugs": {
+    "url": "https://github.com/diffdeck/playwright-reporter/issues"
+  },
+  "type": "commonjs",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "prepublishOnly": "npm run build",
+    "test": "node --import tsx --test src/reporter.test.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "peerDependencies": {
+    "@playwright/test": ">=1.30.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.0",
+    "@types/node": "^20.11.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.4.0"
+  }
+}
