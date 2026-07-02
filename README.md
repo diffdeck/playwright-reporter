@@ -25,15 +25,18 @@ export default defineConfig({
   },
   reporter: [
     ["list"],
-    ["@diffdeckai/playwright-reporter", { host: "https://diffdeck.ai" }],
+    ["@diffdeckai/playwright-reporter"],
   ],
 });
 ```
 
-Options can also come entirely from the environment, so CI needs no config change:
+That's the whole integration. The **only** thing you must supply is the project token
+via `DIFFDECK_TOKEN` (see below) — `host` is optional and defaults to
+`https://diffdeck.ai` (production), and branch/commit auto-resolve from CI env vars.
+Point at a self-hosted / non-default instance only if you need to:
 
 ```ts
-reporter: [["list"], ["@diffdeckai/playwright-reporter"]],
+reporter: [["list"], ["@diffdeckai/playwright-reporter", { host: "https://diffdeck.example" }]],
 ```
 
 ### Options
@@ -48,6 +51,7 @@ All options are optional and fall back to environment variables.
 | `commitSha`      | `string`   | `DIFFDECK_COMMIT`, `GITHUB_SHA`, `CI_COMMIT_SHA`, `GIT_COMMIT`                      | —                    | Git commit SHA tagged on each recording.                                                      |
 | `stepCategories` | `string[]` | —                                                                                  | all categories       | If set, only steps with these Playwright categories are captured (e.g. `["test.step","expect"]`). |
 | `quiet`          | `boolean`  | —                                                                                  | `false`              | Silence the reporter's console output.                                                        |
+| `mode`           | `"upload" \| "write"` | `DIFFDECK_MODE`                                                          | `"upload"`           | `"upload"` (default) posts each recording during the run. `"write"` instead writes a metadata sidecar (see below). |
 
 ### Environment variables
 
@@ -81,6 +85,22 @@ For each completed test that has a video, the reporter sends a `multipart/form-d
 Authentication is the `X-UI-Review-Token` header.
 
 If the repository does not have the DiffDeck recordings add-on enabled, the route responds `402`. The reporter treats this as a soft signal: it logs once and stops uploading for the rest of the run, without failing the test run.
+
+## Deferred upload (`mode: "write"`)
+
+By default the reporter **uploads during the run** — that's the recommended integration and needs no extra CI step. If you'd rather upload *after* the run (for example to keep the test job offline, or to batch the upload in a separate step), set `mode: "write"` (or `DIFFDECK_MODE=write`). Instead of uploading, the reporter writes a `<video>.json` metadata sidecar next to each recorded video, carrying the same fields it would have uploaded (test title, file, id, status, duration, retries, branch, commit, and the step timeline). No token is needed in write mode.
+
+A later step then uploads them — e.g. the [`diffdeck` CLI / GitHub Action](https://www.npmjs.com/package/@diffdeckai/cli), which reads those sidecars so nothing has to be derived from file paths:
+
+```yaml
+- uses: diffdeck/diffdeck-action@v1
+  with:
+    command: recording
+    token: ${{ secrets.DIFFDECK_TOKEN }}
+    videos: test-results   # dir of videos + their .json sidecars
+```
+
+Most projects should stay on the default `"upload"` mode.
 
 ## Step-timeline metadata shape
 

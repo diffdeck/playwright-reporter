@@ -32,8 +32,16 @@ import {
 import { postRecording, type RecordingUpload } from "./upload";
 
 const PACKAGE_NAME = "@diffdeckai/playwright-reporter";
-// Kept in sync with package.json; surfaced in the uploaded metadata.
-const PACKAGE_VERSION = "0.1.0";
+// Read from package.json at runtime so it never drifts (surfaced in the uploaded
+// metadata as `reporterVersion`). Resolves from dist/ (../package.json) and from
+// src/ under tsx during tests; falls back to "0.0.0" if it can't be read.
+const PACKAGE_VERSION: string = (() => {
+  try {
+    return require("../package.json").version || "0.0.0";
+  } catch {
+    return "0.0.0";
+  }
+})();
 const DEFAULT_HOST = "https://diffdeck.ai";
 
 const ACCEPTED_VIDEO_TYPES = new Set(["video/webm", "video/mp4"]);
