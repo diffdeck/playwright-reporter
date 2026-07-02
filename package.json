@@ -1,6 +1,6 @@
 {
   "name": "@diffdeckai/playwright-reporter",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Playwright reporter that uploads each test's video recording, with a per-step timeline, to DiffDeck.",
   "keywords": [
     "playwright",
