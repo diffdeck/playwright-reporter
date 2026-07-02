@@ -4,10 +4,13 @@
  */
 import assert from "node:assert/strict";
 import { afterEach, beforeEach, describe, it } from "node:test";
+import { mkdtempSync, readFileSync, existsSync, writeFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
 import DiffDeckReporter from "./reporter";
 import { buildRecordingForm, type RecordingUpload } from "./upload";
-import type { RecordingMetadata } from "./types";
+import type { RecordingMetadata, RecordingSidecar } from "./types";
 
 const TEST_START = new Date("2026-06-30T12:00:00.000Z");
 
@@ -248,6 +251,47 @@ describe("DiffDeckReporter", () => {
     result.attachments = [];
     await reporter.onTestEnd(fakeTest(), result);
     assert.equal(fetchMock.calls.length, 0);
+  });
+
+  it("write mode: writes a <video>.json sidecar next to the video and uploads nothing", async () => {
+    fetchMock = installFetchMock();
+    const dir = mkdtempSync(join(tmpdir(), "ddwrite-"));
+    try {
+      const videoPath = join(dir, "video.webm");
+      writeFileSync(videoPath, "FAKEVIDEOBYTES");
+
+      // No token needed in write mode.
+      const reporter = new DiffDeckReporter({ mode: "write", branch: "feature/login", commitSha: "abc1234" });
+      const test = fakeTest();
+      const result = fakeResult();
+      // On-disk video path (video: "on" writes to disk); drop the inline body.
+      result.attachments = [{ name: "video", contentType: "video/webm", path: videoPath }];
+      reporter.onBegin(fakeConfig(), {} as any);
+
+      const s = step({ title: "sign in", category: "test.step", offsetMs: 100, duration: 400 });
+      reporter.onStepBegin(test, result, s);
+      reporter.onStepEnd(test, result, s);
+      await reporter.onTestEnd(test, result);
+
+      assert.equal(fetchMock.calls.length, 0, "write mode uploads nothing");
+      const sidecarPath = `${videoPath}.json`;
+      assert.ok(existsSync(sidecarPath), "sidecar written next to the video");
+
+      const sidecar = JSON.parse(readFileSync(sidecarPath, "utf8")) as RecordingSidecar;
+      assert.equal(sidecar.test, "logs in successfully");
+      assert.equal(sidecar.file, "e2e/login.spec.ts");
+      assert.equal(sidecar.testId, "test-abc");
+      assert.equal(sidecar.status, "passed");
+      assert.equal(sidecar.durationMs, 1500);
+      assert.equal(sidecar.retries, 0);
+      assert.equal(sidecar.branch, "feature/login");
+      assert.equal(sidecar.commit, "abc1234");
+      assert.equal(sidecar.metadata.schemaVersion, 1);
+      assert.equal(sidecar.metadata.steps.length, 1);
+      assert.equal(sidecar.metadata.steps[0].title, "sign in");
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 });
 

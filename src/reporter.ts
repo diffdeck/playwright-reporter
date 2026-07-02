@@ -11,7 +11,7 @@
  *
  * Requires Playwright to record video, e.g. `use: { video: "on" }`.
  */
-import { readFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import { basename } from "node:path";
 import type {
   FullConfig,
@@ -23,8 +23,10 @@ import type {
 
 import {
   RECORDING_METADATA_SCHEMA_VERSION,
+  type DiffDeckReporterMode,
   type DiffDeckReporterOptions,
   type RecordingMetadata,
+  type RecordingSidecar,
   type RecordingStep,
 } from "./types";
 import { postRecording, type RecordingUpload } from "./upload";
@@ -54,6 +56,7 @@ export default class DiffDeckReporter implements Reporter {
   private readonly branch: string | undefined;
   private readonly commitSha: string | undefined;
   private readonly quiet: boolean;
+  private readonly mode: DiffDeckReporterMode;
   private rootDir = process.cwd();
 
   /** Steps collected per (test, result) run. */
@@ -62,11 +65,13 @@ export default class DiffDeckReporter implements Reporter {
   /** Once the repo's recordings add-on is gated (402), stop trying. */
   private gated = false;
   private uploaded = 0;
+  private written = 0;
   private skipped = 0;
   private failures = 0;
 
   constructor(options: DiffDeckReporterOptions = {}) {
     this.options = options;
+    this.mode = options.mode ?? (firstEnv("DIFFDECK_MODE") === "write" ? "write" : "upload");
     this.host = options.host ?? firstEnv("DIFFDECK_HOST") ?? DEFAULT_HOST;
     this.token = options.token ?? firstEnv("DIFFDECK_TOKEN");
     this.branch =
@@ -84,7 +89,7 @@ export default class DiffDeckReporter implements Reporter {
 
   onBegin(config: FullConfig): void {
     this.rootDir = config.rootDir || process.cwd();
-    if (!this.token) {
+    if (this.mode === "upload" && !this.token) {
       this.warn(
         `no token configured (set DIFFDECK_TOKEN or the reporter's "token" option) — recordings will not be uploaded`
       );
@@ -124,7 +129,7 @@ export default class DiffDeckReporter implements Reporter {
     const buffer = this.steps.get(result) ?? [];
     this.steps.delete(result);
 
-    if (!this.token || this.gated) {
+    if (this.gated || (this.mode === "upload" && !this.token)) {
       this.skipped++;
       return;
     }
@@ -138,23 +143,6 @@ export default class DiffDeckReporter implements Reporter {
       this.skipped++;
       return;
     }
-
-    let bytes: Buffer;
-    try {
-      bytes = video.body ? Buffer.from(video.body) : await readFile(video.path!);
-    } catch (e: any) {
-      this.warn(`could not read video for "${test.title}": ${e?.message ?? e}`);
-      this.failures++;
-      return;
-    }
-    if (bytes.byteLength === 0) {
-      this.skipped++;
-      return;
-    }
-
-    const videoType = ACCEPTED_VIDEO_TYPES.has(video.contentType)
-      ? video.contentType
-      : "video/webm";
 
     const metadata: RecordingMetadata = {
       schemaVersion: RECORDING_METADATA_SCHEMA_VERSION,
@@ -173,6 +161,53 @@ export default class DiffDeckReporter implements Reporter {
         .map(({ step }) => step),
     };
 
+    // Write mode: drop a `<video>.json` sidecar next to the video and let a later
+    // step (the diffdeck CLI / Action) upload it. Requires an on-disk video path.
+    if (this.mode === "write") {
+      if (!video.path) {
+        this.warn(`no on-disk video path for "${test.title}" — cannot write a sidecar (record video to disk, not inline)`);
+        this.skipped++;
+        return;
+      }
+      const sidecar: RecordingSidecar = {
+        test: test.title,
+        file: this.relativeFile(test),
+        testId: test.id,
+        status: result.status,
+        durationMs: result.duration,
+        retries: result.retry,
+        branch: this.branch,
+        commit: this.commitSha,
+        metadata,
+      };
+      try {
+        await writeFile(`${video.path}.json`, JSON.stringify(sidecar, null, 2));
+        this.written++;
+      } catch (e: any) {
+        this.warn(`could not write sidecar for "${test.title}": ${e?.message ?? e}`);
+        this.failures++;
+      }
+      return;
+    }
+
+    // Upload mode: read the video bytes and POST to DiffDeck.
+    let bytes: Buffer;
+    try {
+      bytes = video.body ? Buffer.from(video.body) : await readFile(video.path!);
+    } catch (e: any) {
+      this.warn(`could not read video for "${test.title}": ${e?.message ?? e}`);
+      this.failures++;
+      return;
+    }
+    if (bytes.byteLength === 0) {
+      this.skipped++;
+      return;
+    }
+
+    const videoType = ACCEPTED_VIDEO_TYPES.has(video.contentType)
+      ? video.contentType
+      : "video/webm";
+
     const upload: RecordingUpload = {
       video: bytes,
       videoType,
@@ -188,7 +223,7 @@ export default class DiffDeckReporter implements Reporter {
       metadata,
     };
 
-    const outcome = await postRecording(this.host, this.token, upload);
+    const outcome = await postRecording(this.host, this.token!, upload);
     if (outcome.ok) {
       this.uploaded++;
       return;
@@ -206,8 +241,8 @@ export default class DiffDeckReporter implements Reporter {
 
   async onEnd(): Promise<void> {
     if (this.quiet) return;
-    if (!this.token) return;
-    const parts = [`${this.uploaded} uploaded`];
+    if (this.mode === "upload" && !this.token) return;
+    const parts = [this.mode === "write" ? `${this.written} written` : `${this.uploaded} uploaded`];
     if (this.skipped) parts.push(`${this.skipped} skipped`);
     if (this.failures) parts.push(`${this.failures} failed`);
     this.log(`recordings: ${parts.join(", ")}`);

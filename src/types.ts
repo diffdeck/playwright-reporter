@@ -61,8 +61,49 @@ export interface RecordingMetadata {
   steps: RecordingStep[];
 }
 
+/**
+ * A metadata sidecar written next to a recording's video file in `"write"` mode
+ * (`<video>.json`). It carries everything the DiffDeck upload path needs so the
+ * uploader (the `diffdeck` CLI / GitHub Action) doesn't have to derive anything
+ * from file paths. Keys mirror the CLI's `upload-recording` flags.
+ */
+export interface RecordingSidecar {
+  /** Test title (→ `--test`). */
+  test: string;
+  /** Repo-relative test file path (→ `--file`), if known. */
+  file?: string;
+  /** Stable Playwright test id (→ `--test-id`). */
+  testId: string;
+  /** Test status, e.g. `passed`/`failed`/`skipped` (→ `--status`). */
+  status: string;
+  /** Test duration in ms (→ `--duration`). */
+  durationMs: number;
+  /** Retry count (→ `--retries`). */
+  retries: number;
+  /** Git branch, if resolved (→ `--branch`). */
+  branch?: string;
+  /** Git commit SHA, if resolved (→ `--commit`). */
+  commit?: string;
+  /** The rich step-timeline document (→ `--metadata`, serialized to JSON). */
+  metadata: RecordingMetadata;
+}
+
+/** How the reporter emits recordings. */
+export type DiffDeckReporterMode =
+  /** Upload each recording to DiffDeck as the test run proceeds (default). */
+  | "upload"
+  /** Write a `<video>.json` sidecar next to each video; a later step uploads. */
+  | "write";
+
 /** Options accepted by the reporter in `playwright.config.ts`. */
 export interface DiffDeckReporterOptions {
+  /**
+   * How to emit recordings. `"upload"` (default) posts each to DiffDeck during the
+   * run; `"write"` writes a `<video>.json` metadata sidecar next to each video so a
+   * later step (the `diffdeck` CLI / GitHub Action) uploads them. Falls back to the
+   * `DIFFDECK_MODE` env var. In `"write"` mode no token is needed.
+   */
+  mode?: DiffDeckReporterMode;
   /**
    * DiffDeck host base URL (no trailing slash needed). Recordings are POSTed to
    * `<host>/api/products/ui-review/recordings`. Falls back to the `DIFFDECK_HOST`
