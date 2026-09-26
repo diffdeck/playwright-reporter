@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/diffdeck/playwright-reporter/compare/v1.0.1...v1.1.0) (2026-09-26)
+
+
+### Features
+
+* product option for monorepo products ([#5](https://github.com/diffdeck/playwright-reporter/issues/5)) ([7c45486](https://github.com/diffdeck/playwright-reporter/commit/7c45486d393b3c9ee2387dde577aebdb19e1f00e))
+
 ## [1.0.1](https://github.com/diffdeck/playwright-reporter/compare/v1.0.0...v1.0.1) (2026-07-02)
 
 
