@@ -261,7 +261,7 @@ describe("DiffDeckReporter", () => {
       writeFileSync(videoPath, "FAKEVIDEOBYTES");
 
       // No token needed in write mode.
-      const reporter = new DiffDeckReporter({ mode: "write", branch: "feature/login", commitSha: "abc1234" });
+      const reporter = new DiffDeckReporter({ mode: "write", branch: "feature/login", commitSha: "abc1234", product: "Web-App" });
       const test = fakeTest();
       const result = fakeResult();
       // On-disk video path (video: "on" writes to disk); drop the inline body.
@@ -286,6 +286,7 @@ describe("DiffDeckReporter", () => {
       assert.equal(sidecar.retries, 0);
       assert.equal(sidecar.branch, "feature/login");
       assert.equal(sidecar.commit, "abc1234");
+      assert.equal(sidecar.product, "web-app", "product key is normalized to lowercase");
       assert.equal(sidecar.metadata.schemaVersion, 1);
       assert.equal(sidecar.metadata.steps.length, 1);
       assert.equal(sidecar.metadata.steps[0].title, "sign in");
@@ -317,6 +318,26 @@ describe("buildRecordingForm", () => {
     assert.equal(form.get("branch"), null);
     assert.equal(form.get("commitSha"), null);
     assert.equal(form.get("status"), null);
+    assert.equal(form.get("product"), null);
     assert.ok(form.get("video") instanceof Blob);
+  });
+
+  it("includes the monorepo product key when set", () => {
+    const upload: RecordingUpload = {
+      video: Buffer.from("x"),
+      videoType: "video/webm",
+      filename: "v.webm",
+      testTitle: "t",
+      product: "web-app",
+      metadata: {
+        schemaVersion: 1,
+        reporter: "@diffdeckai/playwright-reporter",
+        reporterVersion: "0.0.0",
+        recordingStartTime: TEST_START.toISOString(),
+        testDurationMs: 0,
+        steps: [],
+      },
+    };
+    assert.equal(buildRecordingForm(upload).get("product"), "web-app");
   });
 });
