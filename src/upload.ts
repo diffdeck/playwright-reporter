@@ -25,6 +25,8 @@ export interface RecordingUpload {
   retries?: number;
   branch?: string;
   commitSha?: string;
+  /** Monorepo product key; omitted = the repo's default product. */
+  product?: string;
   metadata: RecordingMetadata;
 }
 
@@ -49,6 +51,7 @@ export function buildRecordingForm(upload: RecordingUpload): FormData {
   if (upload.retries != null) form.set("retries", String(Math.round(upload.retries)));
   if (upload.branch) form.set("branch", upload.branch);
   if (upload.commitSha) form.set("commitSha", upload.commitSha);
+  if (upload.product) form.set("product", upload.product);
   form.set("metadata", JSON.stringify(upload.metadata));
   return form;
 }

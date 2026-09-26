@@ -84,6 +84,8 @@ export interface RecordingSidecar {
   branch?: string;
   /** Git commit SHA, if resolved (→ `--commit`). */
   commit?: string;
+  /** Monorepo product key, if set (→ `--product`). */
+  product?: string;
   /** The rich step-timeline document (→ `--metadata`, serialized to JSON). */
   metadata: RecordingMetadata;
 }
@@ -119,6 +121,12 @@ export interface DiffDeckReporterOptions {
   branch?: string;
   /** Git commit SHA to tag recordings with. Falls back to common CI env vars (see README). */
   commitSha?: string;
+  /**
+   * Monorepo product key (e.g. `"web-app"`): links recordings to that DiffDeck product
+   * of the repo instead of its default product. Lowercase letters, digits, `.`, `_`
+   * and `-`. Falls back to the `DIFFDECK_PRODUCT` env var; unset = default product.
+   */
+  product?: string;
   /**
    * If set, only steps whose `category` is in this list are captured. By default all
    * steps are captured. Example: `["test.step", "expect"]` for a high-level timeline.

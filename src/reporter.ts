@@ -63,6 +63,7 @@ export default class DiffDeckReporter implements Reporter {
   private readonly token: string | undefined;
   private readonly branch: string | undefined;
   private readonly commitSha: string | undefined;
+  private readonly product: string | undefined;
   private readonly quiet: boolean;
   private readonly mode: DiffDeckReporterMode;
   private rootDir = process.cwd();
@@ -88,6 +89,7 @@ export default class DiffDeckReporter implements Reporter {
     this.commitSha =
       options.commitSha ??
       firstEnv("DIFFDECK_COMMIT", "GITHUB_SHA", "CI_COMMIT_SHA", "GIT_COMMIT");
+    this.product = (options.product ?? firstEnv("DIFFDECK_PRODUCT"))?.trim().toLowerCase() || undefined;
     this.quiet = options.quiet ?? false;
   }
 
@@ -186,6 +188,7 @@ export default class DiffDeckReporter implements Reporter {
         retries: result.retry,
         branch: this.branch,
         commit: this.commitSha,
+        product: this.product,
         metadata,
       };
       try {
@@ -228,6 +231,7 @@ export default class DiffDeckReporter implements Reporter {
       retries: result.retry,
       branch: this.branch,
       commitSha: this.commitSha,
+      product: this.product,
       metadata,
     };
 

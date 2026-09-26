@@ -49,6 +49,7 @@ All options are optional and fall back to environment variables.
 | `token`          | `string`   | `DIFFDECK_TOKEN`                                                                   | —                    | Per-repo project token, sent as the `X-UI-Review-Token` header. **Required** to upload.       |
 | `branch`         | `string`   | `DIFFDECK_BRANCH`, `GITHUB_HEAD_REF`, `GITHUB_REF_NAME`, `CI_COMMIT_REF_NAME`, `GIT_BRANCH` | —          | Git branch tagged on each recording.                                                          |
 | `commitSha`      | `string`   | `DIFFDECK_COMMIT`, `GITHUB_SHA`, `CI_COMMIT_SHA`, `GIT_COMMIT`                      | —                    | Git commit SHA tagged on each recording.                                                      |
+| `product`        | `string`   | `DIFFDECK_PRODUCT`                                                                 | —                    | Monorepo product key (e.g. `web-app`) — links recordings to that DiffDeck product of the repo (own baselines, builds and GitHub check). Unset = the repo's default product. |
 | `stepCategories` | `string[]` | —                                                                                  | all categories       | If set, only steps with these Playwright categories are captured (e.g. `["test.step","expect"]`). |
 | `quiet`          | `boolean`  | —                                                                                  | `false`              | Silence the reporter's console output.                                                        |
 | `mode`           | `"upload" \| "write"` | `DIFFDECK_MODE`                                                          | `"upload"`           | `"upload"` (default) posts each recording during the run. `"write"` instead writes a metadata sidecar (see below). |
@@ -80,6 +81,7 @@ For each completed test that has a video, the reporter sends a `multipart/form-d
 | `retries`    | `result.retry`                                      |
 | `branch`     | resolved branch (see options)                       |
 | `commitSha`  | resolved commit (see options)                       |
+| `product`    | monorepo product key, when set (see options)        |
 | `metadata`   | JSON string — the step-timeline document (below)    |
 
 Authentication is the `X-UI-Review-Token` header.
@@ -88,7 +90,7 @@ If the repository does not have the DiffDeck recordings add-on enabled, the rout
 
 ## Deferred upload (`mode: "write"`)
 
-By default the reporter **uploads during the run** — that's the recommended integration and needs no extra CI step. If you'd rather upload *after* the run (for example to keep the test job offline, or to batch the upload in a separate step), set `mode: "write"` (or `DIFFDECK_MODE=write`). Instead of uploading, the reporter writes a `<video>.json` metadata sidecar next to each recorded video, carrying the same fields it would have uploaded (test title, file, id, status, duration, retries, branch, commit, and the step timeline). No token is needed in write mode.
+By default the reporter **uploads during the run** — that's the recommended integration and needs no extra CI step. If you'd rather upload *after* the run (for example to keep the test job offline, or to batch the upload in a separate step), set `mode: "write"` (or `DIFFDECK_MODE=write`). Instead of uploading, the reporter writes a `<video>.json` metadata sidecar next to each recorded video, carrying the same fields it would have uploaded (test title, file, id, status, duration, retries, branch, commit, product, and the step timeline). No token is needed in write mode.
 
 A later step then uploads them — e.g. the [`diffdeck` CLI / GitHub Action](https://www.npmjs.com/package/@diffdeckai/cli), which reads those sidecars so nothing has to be derived from file paths:
 
